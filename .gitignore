@@ -1,0 +1,15 @@
+# OS 임시 파일
+.DS_Store
+Thumbs.db
+# IDE (에디터) 설정 파일
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+# 로컬 개발 환경 변수 (혹시 루트에 생성될 경우를 대비)
+.env
+.env.local
+.env.production.local
+# 로그 파일
+*.log

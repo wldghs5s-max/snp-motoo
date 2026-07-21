@@ -1,0 +1,390 @@
+.stock-chart-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Modal chart card settings */
+.stock-chart-card--modal {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stock-chart-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.stock-chart-card__title-area {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.stock-chart-card__symbol {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.stock-chart-card__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* Action button bar */
+.stock-chart-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-action-btn {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-action-btn:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Timeframe buttons list */
+.timeframe-buttons {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.tf-btn {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4b5563;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.tf-btn:hover {
+  color: #111827;
+}
+
+.tf-btn--active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stock-chart-card__price-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.stock-chart-card__price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.stock-chart-card__change {
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.change-up {
+  color: #dc2626; /* Red in Korean Stock conventions */
+}
+
+.change-down {
+  color: #2563eb; /* Blue */
+}
+
+/* Chart HUD overlays */
+.chart-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(229, 231, 235, 0.6);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  color: #4b5563;
+  text-align: left;
+}
+
+.hud-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.price-hud span {
+  font-size: 11px;
+}
+
+.hud-date {
+  font-weight: 700;
+  color: #111827;
+  margin-right: 4px;
+}
+
+.hud-row strong {
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.hud-row strong.up {
+  color: #b91c1c;
+}
+
+.hud-row strong.down {
+  color: #1d4ed8;
+}
+
+.indicator-hud {
+  border-top: 1px dashed rgba(0, 0, 0, 0.05);
+  padding-top: 4px;
+}
+
+/* Canvas Box */
+.stock-chart-card__canvas-container {
+  position: relative;
+  width: 100%;
+  height: 380px; 
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+/* Make canvas height occupy full remaining space in modal mode */
+.stock-chart-card--modal .stock-chart-card__canvas-container {
+  height: calc(85vh - 180px);
+  min-height: 400px;
+}
+
+.stock-chart-card__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.stock-chart-card__status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.stock-chart-card__status.error {
+  color: #ef4444;
+}
+
+/* Tooltip overlay styling */
+.stock-chart-card__tooltip {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 130px;
+  transition: opacity 0.15s ease;
+}
+
+.tooltip-time {
+  font-size: 9px;
+  font-weight: 600;
+  color: #9ca3af;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.tooltip-price-details {
+  font-size: 11px;
+  color: #e5e7eb;
+  font-family: ui-monospace, Consolas, monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.stock-chart-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #10b981;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.footer-info {
+  font-size: 11px;
+}
+
+/* ==========================================================================
+   ZOOM CHART MODAL WINDOW OVERLAYS
+   ========================================================================== */
+
+.chart-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.5); /* Slate gray dark backing */
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Ensure modal draws on top of everything, including orders */
+  animation: fadeIn 0.25s ease-out;
+}
+
+.chart-modal-card {
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 90vw;
+  height: 85vh;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chart-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chart-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.modal-help-tip {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.close-modal-btn {
+  background: #f3f4f6;
+  border: none;
+  font-size: 26px;
+  color: #6b7280;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 0;
+}
+
+.close-modal-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  transform: rotate(90deg);
+}
+
+.chart-modal-body {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

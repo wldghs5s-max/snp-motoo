@@ -1,0 +1,155 @@
+.rankings-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.rankings-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  text-align: left;
+}
+
+.rankings-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.rankings-desc {
+  margin: 6px 0 0 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.rankings-refresh-btn {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.05);
+  transition: all 0.2s ease;
+}
+
+.rankings-refresh-btn:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  transform: translateY(-1px);
+}
+
+/* Rankings list card */
+.rankings-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  overflow: hidden;
+}
+
+.rankings-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #f3f4f6;
+}
+
+.rankings-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  min-width: 700px;
+  font-size: 14px;
+}
+
+.rankings-table th {
+  padding: 14px 18px;
+  background: #f9fafb;
+  color: #4b5563;
+  font-weight: 700;
+  font-size: 13px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rankings-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #1f2937;
+  vertical-align: middle;
+}
+
+.rank-row {
+  transition: background-color 0.2s ease;
+}
+
+.rank-row:hover {
+  background-color: #f9fafb;
+}
+
+/* Highlight the current user */
+.rank-row--me {
+  background-color: #eff6ff !important;
+}
+
+.rank-row--me td {
+  color: #1d4ed8;
+}
+
+.me-badge {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Medal badges for top 3 */
+.rank-medal {
+  font-size: 22px;
+  display: inline-block;
+  line-height: 1;
+}
+
+.rank-num {
+  font-weight: 700;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.rank-username {
+  font-size: 15px;
+}
+
+.rank-return {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rankings-loading {
+  text-align: center;
+  padding: 60px;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.rankings-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: left;
+}
