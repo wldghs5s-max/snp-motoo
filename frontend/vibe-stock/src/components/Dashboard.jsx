@@ -31,6 +31,7 @@ function Dashboard({ username, onLogout }) {
   // Real-time stock quotes state
   const [liveStocks, setLiveStocks] = useState(stockQuotes)
   const [selectedStockCode, setSelectedStockCode] = useState('AAPL')
+  const [exchangeRate, setExchangeRate] = useState(1350)
   const [searchQuery, setSearchQuery] = useState('')
   const [watchlist, setWatchlist] = useState([])
   const [notificationToast, setNotificationToast] = useState(null)
@@ -64,7 +65,23 @@ function Dashboard({ username, onLogout }) {
     }
   }
 
-  const fetchInitialQuotes = async () => {
+  const fetchExchangeRate = async () => {
+    try {
+      const response = await fetch('https://open.er-api.com/v6/latest/USD')
+      const data = await response.json()
+      if (data && data.rates && data.rates.KRW) {
+        const rate = Math.round(data.rates.KRW * 100) / 100
+        setExchangeRate(rate)
+        console.log(`Fetched latest USD to KRW exchange rate: ${rate}`)
+        return rate
+      }
+    } catch (e) {
+      console.warn('Failed to fetch exchange rate, using fallback 1350', e)
+    }
+    return 1350
+  }
+
+  const fetchInitialQuotes = async (rateToUse = 1350) => {
     // Only fetch for top major stocks on mount to prevent Finnhub 429 Rate Limit error
     const topStocks = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NFLX', 'AMD', 'JPM']
     try {
@@ -75,8 +92,8 @@ function Dashboard({ username, onLogout }) {
           try {
             const data = await apiFetch(`/api/stocks/${stock.code}/quote`)
             if (data && data.c) {
-              const currentPrice = Math.round(data.c * 1350)
-              const prevClose = Math.round(data.pc * 1350)
+              const currentPrice = Math.round(data.c * rateToUse)
+              const prevClose = Math.round(data.pc * rateToUse)
               const fluctuationRate = ((currentPrice - prevClose) / prevClose) * 100
 
               // Push to backend
@@ -106,7 +123,9 @@ function Dashboard({ username, onLogout }) {
 
   const loadInitialData = async () => {
     setLoading(true)
-    await Promise.all([fetchUserData(), fetchHoldings(), fetchInitialQuotes()])
+    const rate = await fetchExchangeRate()
+    await Promise.all([fetchUserData(), fetchHoldings()])
+    await fetchInitialQuotes(rate)
     setLoading(false)
   }
 
@@ -145,8 +164,8 @@ function Dashboard({ username, onLogout }) {
       try {
         const data = await apiFetch(`/api/stocks/${selectedStockCode}/quote`)
         if (data && data.c) {
-          const currentPrice = Math.round(data.c * 1350)
-          const prevClose = Math.round(data.pc * 1350)
+          const currentPrice = Math.round(data.c * exchangeRate)
+          const prevClose = Math.round(data.pc * exchangeRate)
           const fluctuationRate = ((currentPrice - prevClose) / prevClose) * 100
 
           setLiveStocks((prev) =>
@@ -287,7 +306,7 @@ function Dashboard({ username, onLogout }) {
           if (message.type === 'trade' && message.data && message.data.length > 0) {
             const latestTrade = message.data[message.data.length - 1]
             const code = latestTrade.s
-            const krwPrice = Math.round(latestTrade.p * 1350)
+            const krwPrice = Math.round(latestTrade.p * exchangeRate)
             const tradeVolume = Math.round(latestTrade.v || 10)
 
             if (active) {
@@ -542,6 +561,21 @@ function Dashboard({ username, onLogout }) {
                     </div>
                   </div>
                 </article>
+
+                <article className="asset-card">
+                  <div className="asset-card__header">
+                    <p className="asset-card__label">오늘의 기준 환율</p>
+                    <span className="asset-card__tag" style={{ backgroundColor: 'rgba(249, 115, 22, 0.1)', color: 'var(--color-orange)', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>실시간 연동</span>
+                  </div>
+                  <p className="asset-card__value" style={{ fontSize: '24px', fontWeight: '800', margin: '8px 0' }}>
+                    {exchangeRate.toLocaleString()}원
+                  </p>
+                  <div className="asset-card__hint-list">
+                    <div className="hint-item">
+                      <span style={{ fontSize: '11px', color: '#9ca3af', lineHeight: '1.4' }}>* 1 USD 기준. 미국 주가 원화 환산에 매일 동적으로 반영됩니다.</span>
+                    </div>
+                  </div>
+                </article>
               </div>
             </section>
 
@@ -778,6 +812,7 @@ function Dashboard({ username, onLogout }) {
                     symbol={selectedStock.code}
                     name={selectedStock.name}
                     currentPrice={selectedStock.currentPrice}
+                    exchangeRate={exchangeRate}
                   />
                 </section>
               </div>

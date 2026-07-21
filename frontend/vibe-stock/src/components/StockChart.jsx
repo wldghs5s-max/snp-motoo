@@ -3,8 +3,6 @@ import { formatCurrency, formatPrice } from '../utils/format'
 import { apiFetch } from '../api/client'
 import './StockChart.css'
 
-const EXCHANGE_RATE = 1350 // USD to KRW rate
-
 // Resolutions list
 const TIMEFRAMES = [
   { label: '1분봉', value: '1', seconds: 6 * 3600 },       // Last 6 hours (360 candles)
@@ -13,7 +11,7 @@ const TIMEFRAMES = [
   { label: '일봉', value: 'D', seconds: 365 * 24 * 3600 },  // Last 365 days (~250 trading candles)
 ]
 
-function StockChart({ symbol, name, currentPrice, isModal = false }) {
+function StockChart({ symbol, name, currentPrice, isModal = false, exchangeRate = 1350 }) {
   const canvasRef = useRef(null)
   const [resolution, setResolution] = useState('5') // Default: 5 minutes
   const [chartData, setChartData] = useState([])
@@ -36,7 +34,7 @@ function StockChart({ symbol, name, currentPrice, isModal = false }) {
     try {
       const data = await apiFetch(`/api/stocks/${symbol}/quote`)
       if (data && data.c) {
-        return Math.round(data.c * EXCHANGE_RATE)
+        return Math.round(data.c * exchangeRate)
       }
     } catch (e) {
       console.warn('Failed to fetch quote in StockChart', e)
@@ -66,10 +64,10 @@ function StockChart({ symbol, name, currentPrice, isModal = false }) {
         if (data.s === 'ok' && data.c && data.c.length > 0) {
           const candles = data.c.map((close, idx) => ({
             time: new Date(data.t[idx] * 1000),
-            open: Math.round(data.o[idx] * EXCHANGE_RATE),
-            high: Math.round(data.h[idx] * EXCHANGE_RATE),
-            low: Math.round(data.l[idx] * EXCHANGE_RATE),
-            close: Math.round(close * EXCHANGE_RATE),
+            open: Math.round(data.o[idx] * exchangeRate),
+            high: Math.round(data.h[idx] * exchangeRate),
+            low: Math.round(data.l[idx] * exchangeRate),
+            close: Math.round(close * exchangeRate),
             volume: Math.round(data.v[idx]),
           }))
           
