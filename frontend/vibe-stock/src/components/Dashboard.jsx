@@ -11,6 +11,7 @@ import {
   formatFluctuationRate,
   formatPrice,
   getFluctuationClass,
+  formatTradingValue,
 } from '../utils/format'
 import './Dashboard.css'
 
@@ -689,13 +690,17 @@ function Dashboard({ username, onLogout }) {
                             전일대비
                           </th>
                           <th scope="col" className="stock-table__align-right">
-                            거래량
+                            거래대금
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         {[...liveStocks]
-                          .sort((a, b) => (b.volume || 0) - (a.volume || 0))
+                          .sort((a, b) => {
+                            const valueB = b.currentPrice * (b.volume || 0)
+                            const valueA = a.currentPrice * (a.volume || 0)
+                            return valueB - valueA
+                          })
                           .slice(0, 10)
                           .map((stock) => {
                             const isSelected = stock.code === selectedStockCode
@@ -731,7 +736,7 @@ function Dashboard({ username, onLogout }) {
                                   {formatFluctuationRate(stock.fluctuationRate)}
                                 </td>
                                 <td className="stock-table__align-right stock-table__volume">
-                                  {stock.volume ? stock.volume.toLocaleString() : '0'}
+                                  {formatTradingValue(stock.currentPrice * (stock.volume || 0))}
                                 </td>
                               </tr>
                             )

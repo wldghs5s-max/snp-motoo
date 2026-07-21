@@ -13,3 +13,6 @@ Thumbs.db
 .env.production.local
 # 로그 파일
 *.log
+
+# 포트폴리오 파일
+/index.html
