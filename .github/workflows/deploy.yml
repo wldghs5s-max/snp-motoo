@@ -1,0 +1,99 @@
+name: Deploy to AWS (S3 & EC2)
+
+on:
+  push:
+    branches:
+      - main
+      - master  # main 또는 master 브랜치에 push될 때 작동
+
+jobs:
+  frontend-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/vibe-stock/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend/vibe-stock
+          npm install
+
+      - name: Build Frontend
+        run: |
+          cd frontend/vibe-stock
+          # 백엔드 API 서버 IP를 주입하여 빌드합니다.
+          VITE_API_BASE_URL=http://${{ secrets.EC2_HOST }}:8080 npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync frontend/vibe-stock/dist s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+  backend-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend/app
+          file: ./backend/app/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/vibe-stock-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # 기존 구동 중인 컨테이너가 있으면 중지하고 삭제합니다.
+            sudo docker stop vibe-stock-backend || true
+            sudo docker rm vibe-stock-backend || true
+            
+            # 안 쓰는 도커 리소스 정리
+            sudo docker image prune -f
+            
+            # 최신 이미지 풀(Pull)
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/vibe-stock-backend:latest
+            
+            # 컨테이너 실행 (환경변수 주입)
+            sudo docker run -d -p 8080:8080 \
+              --name vibe-stock-backend \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e CORS_ALLOWED_ORIGINS="http://localhost:5173,http://localhost:8080,http://snp-motoo.s3-website.ap-northeast-2.amazonaws.com" \
+              ${{ secrets.DOCKER_USERNAME }}/vibe-stock-backend:latest
