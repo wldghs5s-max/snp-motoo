@@ -95,5 +95,6 @@ jobs:
               -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
               -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e CORS_ALLOWED_ORIGINS="http://localhost:5173,http://localhost:8080,http://snp-motoo.s3-website.ap-northeast-2.amazonaws.com" \
+              -e CORS_ALLOWED_ORIGINS="http://localhost:5173,http://localhost:8080,http://snp-motoo.s3-website.ap-northeast-2.amazonaws.com,http://snp-motoo.s3-website-ap-northeast-2.amazonaws.com" \
               ${{ secrets.DOCKER_USERNAME }}/vibe-stock-backend:latest
+
