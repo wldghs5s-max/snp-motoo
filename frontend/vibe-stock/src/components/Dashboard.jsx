@@ -4,7 +4,7 @@ import StockChart from './StockChart'
 import OrderView from './OrderView'
 import HoldingsView from './HoldingsView'
 import RankingsView from './RankingsView'
-import { apiFetch } from '../api/client'
+import { apiFetch, API_BASE_URL } from '../api/client'
 import { stockQuotes } from '../data/stocks'
 import {
   formatCurrency,
@@ -232,7 +232,14 @@ function Dashboard({ username, onLogout }) {
     let reconnectTimeout = null
 
     const connectNotifSocket = () => {
-      const wsUrl = `ws://localhost:8080/ws/notifications?username=${username}`
+      let wsBase = ''
+      if (API_BASE_URL) {
+        wsBase = API_BASE_URL.replace(/^http/, 'ws')
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        wsBase = `${protocol}//${window.location.host}`
+      }
+      const wsUrl = `${wsBase}/ws/notifications?username=${username}`
       notifSocket = new WebSocket(wsUrl)
 
       notifSocket.onopen = () => {

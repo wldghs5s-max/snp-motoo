@@ -28,8 +28,9 @@ jobs:
       - name: Build Frontend
         run: |
           cd frontend/vibe-stock
-          # 백엔드 API 서버 IP를 주입하여 빌드합니다.
-          VITE_API_BASE_URL=http://${{ secrets.EC2_HOST }}:8080 npm run build
+          # 백엔드 API 서버 IP를 주입하여 빌드합니다. (Nginx를 경유하므로 포트 8080을 제거합니다)
+          VITE_API_BASE_URL=http://${{ secrets.EC2_HOST }} npm run build
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
