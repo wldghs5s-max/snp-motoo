@@ -38,6 +38,7 @@ public class AuthService {
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final TransactionRepository transactionRepository;
+	private final EmailService emailService;
 
 	// In-memory cache for mock verification codes (Expires in 5 minutes)
 	private final Map<String, ResetCodeInfo> resetCodes = new ConcurrentHashMap<>();
@@ -61,12 +62,14 @@ public class AuthService {
 			PasswordEncoder passwordEncoder,
 			AuthenticationManager authenticationManager,
 			JwtTokenProvider jwtTokenProvider,
-			TransactionRepository transactionRepository) {
+			TransactionRepository transactionRepository,
+			EmailService emailService) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.authenticationManager = authenticationManager;
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.transactionRepository = transactionRepository;
+		this.emailService = emailService;
 	}
 
 	@Transactional
@@ -148,9 +151,12 @@ public class AuthService {
 		String cacheKey = request.username() + "#" + request.email();
 		resetCodes.put(cacheKey, new ResetCodeInfo(code, LocalDateTime.now().plusMinutes(5)));
 
+		// Send actual verification code email asynchronously
+		emailService.sendResetCodeEmail(user.getEmail(), code);
+
 		// Return verification code directly for mock testing and evaluation on frontend
 		return Map.of(
-			"message", "인증번호가 생성되었습니다.",
+			"message", "인증번호가 이메일로 발송되었습니다. (메일이 오지 않으면 화면의 코드를 사용해 주세요.)",
 			"verificationCode", code
 		);
 	}
