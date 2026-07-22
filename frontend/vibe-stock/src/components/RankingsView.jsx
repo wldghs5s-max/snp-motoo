@@ -80,7 +80,7 @@ function RankingsView({ currentUsername }) {
                       )}
                     </td>
                     <td className="rank-username">
-                      <strong>{user.username}</strong>
+                      <strong>{user.nickname || user.username}</strong>
                       {isMe && <span className="me-badge">나</span>}
                     </td>
                     <td style={{ textAlign: 'right' }}>

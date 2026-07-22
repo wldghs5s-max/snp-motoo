@@ -16,6 +16,19 @@ import {
 import './Dashboard.css'
 
 
+const BANK_LIST = [
+  { code: 'KB', name: 'KB국민은행' },
+  { code: 'SHINHAN', name: '신한은행' },
+  { code: 'WOORI', name: '우리은행' },
+  { code: 'HANA', name: '하나은행' },
+  { code: 'NH', name: 'NH농협은행' },
+  { code: 'IBK', name: 'IBK기업은행' },
+  { code: 'KAKAO', name: '카카오뱅크' },
+  { code: 'TOSS', name: '토스뱅크' },
+  { code: 'K_BANK', name: '케이뱅크' },
+  { code: 'POST_OFFICE', name: '우체국' }
+]
+
 function Dashboard({ username, onLogout }) {
   const [balance, setBalance] = useState(0)
   const [holdings, setHoldings] = useState([])
@@ -35,6 +48,16 @@ function Dashboard({ username, onLogout }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [watchlist, setWatchlist] = useState([])
   const [notificationToast, setNotificationToast] = useState(null)
+
+  // Settings tab states
+  const [settingsNickname, setSettingsNickname] = useState(localStorage.getItem('nickname') || '')
+  const [settingsBankCode, setSettingsBankCode] = useState(localStorage.getItem('bankCode') || 'KB')
+  const [settingsAccountNumber, setSettingsAccountNumber] = useState(localStorage.getItem('accountNumber') || '')
+  const [settingsError, setSettingsError] = useState('')
+  const [settingsSuccess, setSettingsSuccess] = useState('')
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
+  const [profileUpdatedTime, setProfileUpdatedTime] = useState(0) // Dummy state to trigger Dashboard / Header rerender
 
   const showNotificationToast = (message) => {
     setNotificationToast(message)
@@ -410,6 +433,54 @@ function Dashboard({ username, onLogout }) {
     setShowModal(null)
     setAmount('')
     setModalError('')
+  }
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault()
+    setSettingsError('')
+    setSettingsSuccess('')
+    setSettingsLoading(true)
+
+    try {
+      const data = await apiFetch('/api/user/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          nickname: settingsNickname,
+          bankCode: settingsBankCode,
+          accountNumber: settingsAccountNumber
+        })
+      })
+
+      if (data) {
+        localStorage.setItem('nickname', data.nickname || '')
+        localStorage.setItem('bankCode', data.bankCode || '')
+        localStorage.setItem('bankName', data.bankName || '')
+        localStorage.setItem('accountNumber', data.accountNumber || '')
+        setSettingsSuccess('회원 정보가 성공적으로 변경되었습니다.')
+        setProfileUpdatedTime(Date.now())
+      }
+    } catch (err) {
+      setSettingsError(err.message || '정보 변경에 실패했습니다.')
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
+  const handleWithdrawAccount = async () => {
+    setSettingsError('')
+    setSettingsLoading(true)
+    setShowWithdrawConfirm(false)
+
+    try {
+      await apiFetch('/api/user/withdraw', {
+        method: 'DELETE'
+      })
+      alert('회원 탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.')
+      onLogout()
+    } catch (err) {
+      setSettingsError(err.message || '회원 탈퇴에 실패했습니다.')
+      setSettingsLoading(false)
+    }
   }
 
   const handleQuickAmount = (val) => {
@@ -872,6 +943,138 @@ function Dashboard({ username, onLogout }) {
         {activeTab === 'rankings' && (
           <RankingsView currentUsername={username} />
         )}
+
+        {activeTab === 'settings' && (
+          <>
+            <section className="dashboard__section">
+              <h1 className="dashboard__heading">회원 설정</h1>
+              <p className="dashboard__description">
+                닉네임 변경 및 계좌 정보 관리, 회원 탈퇴를 진행할 수 있습니다.
+              </p>
+            </section>
+
+            <section className="dashboard__section" style={{ maxWidth: '600px', width: '100%' }}>
+              <div className="asset-card" style={{ padding: '32px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', marginBottom: '24px' }}>개인정보 수정</h2>
+                
+                {settingsError && (
+                  <div style={{ color: '#dc2626', background: '#fef2f2', padding: '12px', borderRadius: '8px', fontSize: '14px', marginBottom: '20px', border: '1px solid #fee2e2', textAlign: 'left' }}>
+                    {settingsError}
+                  </div>
+                )}
+                {settingsSuccess && (
+                  <div style={{ color: '#16a34a', background: '#f0fdf4', padding: '12px', borderRadius: '8px', fontSize: '14px', marginBottom: '20px', border: '1px solid #dcfce7', textAlign: 'left' }}>
+                    {settingsSuccess}
+                  </div>
+                )}
+
+                <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>아이디</label>
+                    <input
+                      type="text"
+                      value={username}
+                      disabled
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#f3f4f6', color: '#9ca3af', fontSize: '14px', cursor: 'not-allowed' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>이메일 주소</label>
+                    <input
+                      type="text"
+                      value={localStorage.getItem('email') || ''}
+                      disabled
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#f3f4f6', color: '#9ca3af', fontSize: '14px', cursor: 'not-allowed' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label htmlFor="settingsNickname" style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>닉네임</label>
+                    <input
+                      type="text"
+                      id="settingsNickname"
+                      value={settingsNickname}
+                      onChange={(e) => setSettingsNickname(e.target.value)}
+                      placeholder="변경할 닉네임을 입력하세요"
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', color: '#111827', outline: 'none' }}
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label htmlFor="settingsBankSelect" style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>출금 계좌 은행</label>
+                    <select
+                      id="settingsBankSelect"
+                      value={settingsBankCode}
+                      onChange={(e) => setSettingsBankCode(e.target.value)}
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', color: '#111827', background: '#fff', outline: 'none' }}
+                    >
+                      {BANK_LIST.map((b) => (
+                        <option key={b.code} value={b.code}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label htmlFor="settingsAccountNumber" style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>출금 계좌번호</label>
+                    <input
+                      type="text"
+                      id="settingsAccountNumber"
+                      value={settingsAccountNumber}
+                      onChange={(e) => setSettingsAccountNumber(e.target.value)}
+                      placeholder="계좌번호를 입력하세요"
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '14px', color: '#111827', outline: 'none' }}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={settingsLoading}
+                    style={{
+                      marginTop: '10px',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: '#2563eb',
+                      color: '#fff',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      cursor: settingsLoading ? 'not-allowed' : 'pointer',
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    {settingsLoading ? '변경 중...' : '회원 정보 변경'}
+                  </button>
+                </form>
+
+                <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#374151', margin: 0 }}>회원 탈퇴</h3>
+                    <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>모의투자 자산 및 거래 내역이 비활성화됩니다.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowWithdrawConfirm(true)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #fca5a5',
+                      background: '#fef2f2',
+                      color: '#b91c1c',
+                      fontSize: '13.5px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    회원 탈퇴
+                  </button>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
       </main>
 
       {/* Transaction Modal (Deposit / Withdraw) */}
@@ -892,6 +1095,26 @@ function Dashboard({ username, onLogout }) {
             )}
 
             <form onSubmit={handleTransaction} className="modal-form">
+              {showModal === 'withdraw' && (
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.15)',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  fontSize: '12.5px',
+                  color: '#2563eb',
+                  marginBottom: '15px',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span>🏦</span>
+                  <span>
+                    등록된 계좌 <strong>[{localStorage.getItem('bankName') || '카카오뱅크'}] {localStorage.getItem('accountNumber') || '3333-xx-xxxx'}</strong> 로 입금됩니다.
+                  </span>
+                </div>
+              )}
               <div className="modal-form__group">
                 <label className="modal-form__label">
                   현재 잔액: <strong style={{ color: '#111827' }}>{formatCurrency(balance)}</strong>
@@ -986,6 +1209,41 @@ function Dashboard({ username, onLogout }) {
           >
             &times;
           </button>
+        </div>
+      )}
+
+      {/* WITHDRAWAL CONFIRMATION MODAL */}
+      {showWithdrawConfirm && (
+        <div className="modal-overlay" style={{ zIndex: 10100 }}>
+          <div className="modal-card" style={{ maxWidth: '400px', textAlign: 'center', padding: '24px' }}>
+            <div className="modal-card__header" style={{ justifyContent: 'center', borderBottom: 'none', padding: 0 }}>
+              <h3 className="modal-card__title" style={{ fontSize: '18px', color: '#b91c1c' }}>⚠️ 정말 탈퇴하시겠습니까?</h3>
+            </div>
+            <div className="modal-form" style={{ marginTop: '16px', textAlign: 'left' }}>
+              <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: '1.6', margin: 0 }}>
+                회원 탈퇴 시 보유 중인 모의투자 자산 및 거래 기록이 모두 비활성화됩니다.<br/>
+                *(추후 로그인 시 동일한 계정으로 다시 복구하고 활성화하실 수 있습니다.)*
+              </p>
+              <div className="modal-actions" style={{ marginTop: '24px', display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleWithdrawAccount}
+                  className="btn-modal btn-modal--submit btn-modal--submit-withdraw"
+                  style={{ flex: 1, margin: 0, background: '#dc2626' }}
+                >
+                  탈퇴하기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowWithdrawConfirm(false)}
+                  className="btn-modal btn-modal--cancel"
+                  style={{ flex: 1, margin: 0 }}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

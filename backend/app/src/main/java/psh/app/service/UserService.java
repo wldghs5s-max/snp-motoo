@@ -67,4 +67,29 @@ public class UserService {
 		}
 		return UserResponse.from(user);
 	}
+
+	@Transactional
+	public UserResponse updateProfile(String username, psh.app.dto.ProfileUpdateRequest request) {
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+		// Check nickname duplicate (if changing to a different nickname)
+		if (!user.getNickname().equals(request.nickname()) && userRepository.existsByNickname(request.nickname())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
+		}
+
+		user.updateProfile(request.nickname(), request.bankCode(), request.accountNumber());
+		User updatedUser = userRepository.save(user);
+		return UserResponse.from(updatedUser);
+	}
+
+	@Transactional
+	public void withdrawAccount(String username) {
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+		
+		user.withdraw();
+		userRepository.save(user);
+	}
 }
+

@@ -247,6 +247,7 @@ public class TradingService {
 		}
 
 		List<UserRankingResponse> list = users.stream()
+				.filter(user -> user.getStatus() != psh.app.domain.user.UserStatus.WITHDRAWN)
 				.map(user -> {
 					long cash = user.getBalance();
 					List<Holding> holdings = holdingRepository.findByUser(user);
@@ -272,7 +273,7 @@ public class TradingService {
 
 					double returnRate = ((double) (totalAssets - netInvested) / netInvested) * 100.0;
 
-					return new UserRankingResponse(0, user.getUsername(), cash, totalAssets, returnRate);
+					return new UserRankingResponse(0, user.getUsername(), user.getNickname(), cash, totalAssets, returnRate);
 				})
 				.sorted((a, b) -> b.totalAssets().compareTo(a.totalAssets()))
 				.collect(Collectors.toList());
@@ -280,7 +281,7 @@ public class TradingService {
 		// Assign ranks
 		for (int i = 0; i < list.size(); i++) {
 			UserRankingResponse r = list.get(i);
-			list.set(i, new UserRankingResponse(i + 1, r.username(), r.balance(), r.totalAssets(), r.returnRate()));
+			list.set(i, new UserRankingResponse(i + 1, r.username(), r.nickname(), r.balance(), r.totalAssets(), r.returnRate()));
 		}
 
 		return list;

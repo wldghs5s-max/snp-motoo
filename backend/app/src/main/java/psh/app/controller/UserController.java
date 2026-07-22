@@ -41,4 +41,19 @@ public class UserController {
 			@Valid @RequestBody TransactionRequest request) {
 		return userService.withdraw(userDetails.getUsername(), request.amount());
 	}
+
+	@org.springframework.web.bind.annotation.PutMapping("/profile")
+	public UserResponse updateProfile(
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@Valid @RequestBody psh.app.dto.ProfileUpdateRequest request) {
+		return userService.updateProfile(userDetails.getUsername(), request);
+	}
+
+	@org.springframework.web.bind.annotation.DeleteMapping("/withdraw")
+	@org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+	public void withdrawAccount(@AuthenticationPrincipal CustomUserDetails userDetails) {
+		userService.withdrawAccount(userDetails.getUsername());
+	}
 }
+
+

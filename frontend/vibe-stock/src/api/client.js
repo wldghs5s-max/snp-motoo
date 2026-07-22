@@ -39,11 +39,8 @@ export async function apiFetch(path, options = {}) {
     throw new Error(errorMessage)
   }
 
-  if (response.status === 204) {
-    return null
-  }
-
-  return response.json()
+  const text = await response.text()
+  return text ? JSON.parse(text) : null
 }
 
 // 사용 예시:

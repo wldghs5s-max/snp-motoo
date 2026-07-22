@@ -1,6 +1,8 @@
 import './Header.css'
 
 function Header({ username, onLogout, activeTab, setActiveTab }) {
+  const nickname = localStorage.getItem('nickname') || username;
+
   return (
     <header className="app-header">
       <div className="app-header__inner">
@@ -39,12 +41,18 @@ function Header({ username, onLogout, activeTab, setActiveTab }) {
           >
             실시간 랭킹
           </button>
+          <button
+            className={`app-header__nav-item ${activeTab === 'settings' ? 'app-header__nav-item--active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            설정
+          </button>
         </nav>
 
         {username && (
           <div className="app-header__user">
             <span className="app-header__username">
-              <span className="app-header__user-badge">●</span> {username}님
+              <span className="app-header__user-badge">●</span> {nickname}님 ({username})
             </span>
             <button className="app-header__logout-btn" onClick={onLogout}>
               로그아웃
@@ -57,3 +65,4 @@ function Header({ username, onLogout, activeTab, setActiveTab }) {
 }
 
 export default Header
+

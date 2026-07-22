@@ -22,8 +22,14 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('username')
+    localStorage.removeItem('nickname')
+    localStorage.removeItem('email')
+    localStorage.removeItem('bankCode')
+    localStorage.removeItem('bankName')
+    localStorage.removeItem('accountNumber')
     setUsername(null)
   }
+
 
   if (loading) {
     return (
