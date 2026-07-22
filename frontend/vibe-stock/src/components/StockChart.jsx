@@ -100,11 +100,14 @@ function StockChart({ symbol, name, currentPrice, isModal = false, exchangeRate 
         META: 648000,
         NFLX: 823500,
       }
-      let base = basePrices[symbol] || 200000
+      // Use currentPrice directly as base if available to prevent discrepancy with real-time updates
+      let base = currentPrice || basePrices[symbol] || 200000
 
-      const livePrice = await fetchQuotePrice()
-      if (livePrice) {
-        base = livePrice
+      if (!currentPrice) {
+        const livePrice = await fetchQuotePrice()
+        if (livePrice) {
+          base = livePrice
+        }
       }
 
       const pointsCount = 300
@@ -136,7 +139,7 @@ function StockChart({ symbol, name, currentPrice, isModal = false, exchangeRate 
       setChartData(candles)
     }
 
-    fetchHistoricalData()
+
 
     return () => {
       active = false
@@ -870,7 +873,7 @@ function StockChart({ symbol, name, currentPrice, isModal = false, exchangeRate 
               <button className="close-modal-btn" onClick={() => setShowModal(false)}>&times;</button>
             </div>
             <div className="chart-modal-body">
-              <StockChart symbol={symbol} name={name} currentPrice={currentPrice} isModal={true} />
+              <StockChart symbol={symbol} name={name} currentPrice={currentPrice} isModal={true} exchangeRate={exchangeRate} />
             </div>
           </div>
         </div>
