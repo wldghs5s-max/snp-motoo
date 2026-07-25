@@ -50,7 +50,7 @@ public class User {
 	private UserStatus status = UserStatus.ACTIVE;
 
 	@Column(nullable = true)
-	private boolean isGuest = false;
+	private Boolean isGuest = false;
 
 	@Column(nullable = true)
 	private java.time.LocalDateTime createdAt;
@@ -71,6 +71,14 @@ public class User {
 
 	public String getNickname() {
 		return (nickname != null && !nickname.trim().isEmpty()) ? nickname : username;
+	}
+
+	public boolean isGuest() {
+		return isGuest != null ? isGuest : false;
+	}
+
+	public java.time.LocalDateTime getCreatedAt() {
+		return createdAt != null ? createdAt : java.time.LocalDateTime.now();
 	}
 
 	public String getEmail() {
