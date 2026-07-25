@@ -34,6 +34,12 @@ public class AuthController {
 		return authService.signup(request);
 	}
 
+	@PostMapping("/guest")
+	@ResponseStatus(HttpStatus.CREATED)
+	public AuthResponse guestLogin() {
+		return authService.guestLogin();
+	}
+
 	@PostMapping("/login")
 	public AuthResponse login(@Valid @RequestBody LoginRequest request) {
 		return authService.login(request);

@@ -107,6 +107,35 @@ function Auth({ onLoginSuccess }) {
     }
   }
 
+  // Guest Login Handler
+  const handleGuestLogin = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const data = await apiFetch('/api/auth/guest', {
+        method: 'POST',
+      })
+
+      if (data && data.accessToken) {
+        localStorage.setItem('token', data.accessToken)
+        localStorage.setItem('username', data.username)
+        localStorage.setItem('nickname', data.nickname || data.username)
+        localStorage.setItem('email', data.email || '')
+        localStorage.setItem('bankCode', data.bankCode || '')
+        localStorage.setItem('bankName', data.bankName || '')
+        localStorage.setItem('accountNumber', data.accountNumber || '')
+        onLoginSuccess(data.username)
+      } else {
+        setError('게스트 로그인 처리에 실패했습니다.')
+      }
+    } catch (err) {
+      console.error(err)
+      setError(err.message || '게스트 로그인 요청이 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Reactivate Account Handler
   const handleReactivate = async () => {
     setError('')
@@ -370,6 +399,17 @@ function Auth({ onLoginSuccess }) {
           <button type="submit" className="auth-form__submit" disabled={loading}>
             {loading ? '처리 중...' : isLogin ? '로그인' : '회원가입'}
           </button>
+
+          {isLogin && (
+            <button
+              type="button"
+              className="auth-form__guest-submit"
+              onClick={handleGuestLogin}
+              disabled={loading}
+            >
+              🚀 게스트 계정으로 1초 만에 시작하기 (체험용)
+            </button>
+          )}
         </form>
 
         <div className="auth-card__toggle">

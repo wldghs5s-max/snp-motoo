@@ -49,8 +49,14 @@ public class User {
 	@Enumerated(EnumType.STRING)
 	private UserStatus status = UserStatus.ACTIVE;
 
+	@Column(nullable = true)
+	private boolean isGuest = false;
+
+	@Column(nullable = true)
+	private java.time.LocalDateTime createdAt;
+
 	@Builder
-	public User(String username, String password, String nickname, String email, BankCode bankCode, String accountNumber, Long balance) {
+	public User(String username, String password, String nickname, String email, BankCode bankCode, String accountNumber, Long balance, Boolean isGuest, java.time.LocalDateTime createdAt) {
 		this.username = username;
 		this.password = password;
 		this.nickname = nickname;
@@ -58,6 +64,8 @@ public class User {
 		this.bankCode = bankCode;
 		this.accountNumber = accountNumber;
 		this.balance = balance;
+		this.isGuest = isGuest != null ? isGuest : false;
+		this.createdAt = createdAt != null ? createdAt : java.time.LocalDateTime.now();
 		this.status = UserStatus.ACTIVE;
 	}
 

@@ -248,6 +248,7 @@ public class TradingService {
 
 		List<UserRankingResponse> list = users.stream()
 				.filter(user -> user.getStatus() != psh.app.domain.user.UserStatus.WITHDRAWN)
+				.filter(user -> !user.isGuest() || user.getCreatedAt().isAfter(LocalDateTime.now().minusDays(3)))
 				.map(user -> {
 					long cash = user.getBalance();
 					List<Holding> holdings = holdingRepository.findByUser(user);
@@ -275,6 +276,7 @@ public class TradingService {
 
 					return new UserRankingResponse(0, user.getUsername(), user.getNickname(), cash, totalAssets, returnRate);
 				})
+				.filter(r -> !r.username().startsWith("guest_") || r.totalAssets() != 10_000_000L || r.balance() != 10_000_000L)
 				.sorted((a, b) -> b.totalAssets().compareTo(a.totalAssets()))
 				.collect(Collectors.toList());
 

@@ -108,6 +108,50 @@ public class AuthService {
 		return AuthResponse.of(accessToken, savedUser);
 	}
 
+	@Transactional
+	public AuthResponse guestLogin() {
+		// Generate random guest username and nickname
+		String randomSuffix = String.format("%06d", new Random().nextInt(1000000));
+		String guestUsername = "guest_" + randomSuffix;
+		String guestNickname = "게스트_" + randomSuffix;
+		String guestEmail = guestUsername + "@stock-vibe-mock.com";
+
+		// In case of conflict (very rare), loop until unique
+		int maxRetries = 10;
+		while (userRepository.existsByUsername(guestUsername) && maxRetries > 0) {
+			randomSuffix = String.format("%06d", new Random().nextInt(1000000));
+			guestUsername = "guest_" + randomSuffix;
+			guestNickname = "게스트_" + randomSuffix;
+			guestEmail = guestUsername + "@stock-vibe-mock.com";
+			maxRetries--;
+		}
+
+		User user = User.builder()
+				.username(guestUsername)
+				.password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+				.nickname(guestNickname)
+				.email(guestEmail)
+				.bankCode(psh.app.domain.user.BankCode.KB)
+				.accountNumber("GUEST-" + randomSuffix)
+				.balance(INITIAL_BALANCE)
+				.isGuest(true)
+				.createdAt(LocalDateTime.now())
+				.build();
+
+		User savedUser = userRepository.save(user);
+
+		// Record initial deposit of seed money
+		Transaction initDeposit = Transaction.builder()
+				.user(savedUser)
+				.type(TransactionType.DEPOSIT)
+				.amount(INITIAL_BALANCE)
+				.build();
+		transactionRepository.save(initDeposit);
+
+		String accessToken = jwtTokenProvider.generateToken(savedUser.getUsername());
+		return AuthResponse.of(accessToken, savedUser);
+	}
+
 	@Transactional(readOnly = true)
 	public AuthResponse login(LoginRequest request) {
 		// Authenticate first using Spring Security
