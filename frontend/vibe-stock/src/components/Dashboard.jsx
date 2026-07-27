@@ -311,7 +311,7 @@ function Dashboard({ username, onLogout }) {
     let active = true
 
     const setupWebSocket = () => {
-      socket = new WebSocket('wss://ws.finnhub.io?token=d9crpshr01qh8vpjac70d9crpshr01qh8vpjac7g')
+      socket = new WebSocket('wss://ws.finnhub.io?token=d9jbuu9r01qq0r8loap0d9jbuu9r01qq0r8loapg')
 
       socket.onopen = () => {
         if (socket.readyState === WebSocket.OPEN) {
