@@ -2,6 +2,9 @@ package psh.app.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -232,9 +235,14 @@ public class TradingService {
 	public List<UserRankingResponse> getRankings() {
 		List<User> users = userRepository.findAll();
 
-		// Self-healing: ensure initial seed transaction exists for all users
+		// 1. Bulk load all transactions to check seed existence
+		List<Transaction> allTransactions = new ArrayList<>(transactionRepository.findByUserIn(users));
+		Map<Long, List<Transaction>> transactionsByUser = allTransactions.stream()
+				.collect(Collectors.groupingBy(t -> t.getUser().getId()));
+
+		List<Transaction> toSaveTxs = new ArrayList<>();
 		for (User user : users) {
-			List<Transaction> existingTxs = transactionRepository.findByUser(user);
+			List<Transaction> existingTxs = transactionsByUser.getOrDefault(user.getId(), Collections.emptyList());
 			boolean hasSeed = existingTxs.stream()
 					.anyMatch(t -> t.getType() == TransactionType.DEPOSIT && t.getAmount() == 10_000_000L);
 			if (!hasSeed) {
@@ -243,16 +251,34 @@ public class TradingService {
 						.type(TransactionType.DEPOSIT)
 						.amount(10_000_000L)
 						.build();
-				transactionRepository.save(initDeposit);
+				toSaveTxs.add(initDeposit);
 			}
 		}
 
-		List<UserRankingResponse> list = users.stream()
+		if (!toSaveTxs.isEmpty()) {
+			List<Transaction> savedTxs = transactionRepository.saveAll(toSaveTxs);
+			allTransactions.addAll(savedTxs);
+			// Update the map after adding new seed transactions
+			transactionsByUser = allTransactions.stream()
+					.collect(Collectors.groupingBy(t -> t.getUser().getId()));
+		}
+
+		// 2. Filter active users
+		List<User> activeUsers = users.stream()
 				.filter(user -> user.getStatus() != psh.app.domain.user.UserStatus.WITHDRAWN)
 				.filter(user -> !user.isGuest() || user.getCreatedAt().isAfter(LocalDateTime.now().minusDays(3)))
+				.collect(Collectors.toList());
+
+		// 3. Bulk load all holdings for active users
+		List<Holding> allHoldings = holdingRepository.findByUserIn(activeUsers);
+		Map<Long, List<Holding>> holdingsByUser = allHoldings.stream()
+				.collect(Collectors.groupingBy(h -> h.getUser().getId()));
+
+		final Map<Long, List<Transaction>> finalTransactionsByUser = transactionsByUser;
+		List<UserRankingResponse> list = activeUsers.stream()
 				.map(user -> {
 					long cash = user.getBalance();
-					List<Holding> holdings = holdingRepository.findByUser(user);
+					List<Holding> holdings = holdingsByUser.getOrDefault(user.getId(), Collections.emptyList());
 					long holdingsValue = holdings.stream()
 							.mapToLong(h -> {
 								String cachedPrice = redisTemplate.opsForValue().get("stock:price:" + h.getStockCode());
@@ -263,7 +289,7 @@ public class TradingService {
 					long totalAssets = cash + holdingsValue;
 
 					// Compute true net invested capital
-					List<Transaction> transactions = transactionRepository.findByUser(user);
+					List<Transaction> transactions = finalTransactionsByUser.getOrDefault(user.getId(), Collections.emptyList());
 					long totalDeposited = transactions.stream()
 							.filter(t -> t.getType() == TransactionType.DEPOSIT)
 							.mapToLong(Transaction::getAmount)

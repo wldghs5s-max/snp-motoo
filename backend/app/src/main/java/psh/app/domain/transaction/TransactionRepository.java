@@ -6,6 +6,7 @@ import psh.app.domain.user.User;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 	List<Transaction> findByUser(User user);
+	List<Transaction> findByUserIn(List<User> users);
 	List<Transaction> findByUserOrderByCreatedAtDesc(User user);
 	void deleteByUser(User user);
 }

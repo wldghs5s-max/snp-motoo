@@ -8,6 +8,7 @@ import psh.app.domain.user.User;
 
 public interface HoldingRepository extends JpaRepository<Holding, Long> {
 	List<Holding> findByUser(User user);
+	List<Holding> findByUserIn(List<User> users);
 	Optional<Holding> findByUserAndStockCode(User user, String stockCode);
 	void deleteByUser(User user);
 }
