@@ -37,24 +37,24 @@ public class TradingService {
 	private final HoldingRepository holdingRepository;
 	private final UserRepository userRepository;
 	private final TransactionRepository transactionRepository;
-
-	// In-memory cache for live stock prices pushed from front-end
-	private final ConcurrentHashMap<String, Long> priceMap = new ConcurrentHashMap<>();
+	private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
 
 	public TradingService(
 			OrderRepository orderRepository,
 			HoldingRepository holdingRepository,
 			UserRepository userRepository,
-			TransactionRepository transactionRepository) {
+			TransactionRepository transactionRepository,
+			org.springframework.data.redis.core.StringRedisTemplate redisTemplate) {
 		this.orderRepository = orderRepository;
 		this.holdingRepository = holdingRepository;
 		this.userRepository = userRepository;
 		this.transactionRepository = transactionRepository;
+		this.redisTemplate = redisTemplate;
 	}
 
 	@Transactional
 	public void updatePriceAndMatch(String stockCode, Long price) {
-		priceMap.put(stockCode, price);
+		redisTemplate.opsForValue().set("stock:price:" + stockCode, String.valueOf(price));
 
 		// Find pending orders for this stock
 		List<Order> pendingOrders = orderRepository.findByStockCodeAndStatus(stockCode, OrderStatus.PENDING);
@@ -108,10 +108,11 @@ public class TradingService {
 				.build();
 
 		if (request.orderType() == OrderType.MARKET) {
-			Long currentPrice = priceMap.get(request.stockCode());
-			if (currentPrice == null) {
+			String cachedPrice = redisTemplate.opsForValue().get("stock:price:" + request.stockCode());
+			if (cachedPrice == null) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "시세 정보가 아직 연동되지 않았습니다. 잠시 후 다시 시도해 주세요.");
 			}
+			Long currentPrice = Long.parseLong(cachedPrice);
 			executeOrder(order, currentPrice);
 		} else {
 			// Validation check for LIMIT/MIT orders at the time of entry
@@ -253,7 +254,11 @@ public class TradingService {
 					long cash = user.getBalance();
 					List<Holding> holdings = holdingRepository.findByUser(user);
 					long holdingsValue = holdings.stream()
-							.mapToLong(h -> h.getQuantity() * priceMap.getOrDefault(h.getStockCode(), h.getAveragePrice()))
+							.mapToLong(h -> {
+								String cachedPrice = redisTemplate.opsForValue().get("stock:price:" + h.getStockCode());
+								long currentPrice = (cachedPrice != null) ? Long.parseLong(cachedPrice) : h.getAveragePrice();
+								return h.getQuantity() * currentPrice;
+							})
 							.sum();
 					long totalAssets = cash + holdingsValue;
 
