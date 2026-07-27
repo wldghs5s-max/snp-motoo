@@ -41,6 +41,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 						.requestMatchers("/api/auth/**").permitAll()
+						.requestMatchers("/api/stocks/**").permitAll()
 						.requestMatchers("/ws/**").permitAll()
 						.requestMatchers("/api/payment/success", "/api/payment/cancel", "/api/payment/fail").permitAll()
 						.anyRequest().authenticated())
