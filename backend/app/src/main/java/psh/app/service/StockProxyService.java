@@ -73,7 +73,7 @@ public class StockProxyService {
 				log.warn("Finnhub call failed. Falling back to expired cache for candles: {}", symbol);
 				return optionalCache.get().getResponseBody();
 			}
-			throw new RuntimeException("주식 캔들 데이터를 불러오는 중 오류가 발생했습니다: " + e.getMessage());
+			return "{\"s\":\"no_data\"}";
 		}
 	}
 
@@ -123,7 +123,7 @@ public class StockProxyService {
 				log.warn("Finnhub call failed. Falling back to expired cache for quote: {}", symbol);
 				return optionalCache.get().getResponseBody();
 			}
-			throw new RuntimeException("주식 현재가 정보를 불러오는 중 오류가 발생했습니다: " + e.getMessage());
+			return "{\"c\": 0, \"h\": 0, \"l\": 0, \"o\": 0, \"pc\": 0, \"t\": 0}";
 		}
 	}
 }
