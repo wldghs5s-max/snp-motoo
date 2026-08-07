@@ -91,6 +91,7 @@ jobs:
             
             # 컨테이너 실행 (환경변수 주입)
             sudo docker run -d -p 8080:8080 \
+              --restart unless-stopped \
               --name vibe-stock-backend \
               --add-host=host.docker.internal:host-gateway \
               -e REDIS_HOST="host.docker.internal" \

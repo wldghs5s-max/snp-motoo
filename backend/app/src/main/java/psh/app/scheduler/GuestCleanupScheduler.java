@@ -26,14 +26,14 @@ public class GuestCleanupScheduler {
 	private final HoldingRepository holdingRepository;
 
 	/**
-	 * 매일 새벽 3시(KST 기준)에 생성된 지 7일이 지난 게스트 계정 및 연관 데이터를 영구 삭제합니다.
+	 * 매일 새벽 3시(KST 기준)에 생성된 지 30일이 지난 게스트 계정 및 연관 데이터를 영구 삭제합니다.
 	 * cron: "0 0 3 * * *"
 	 */
 	@Scheduled(cron = "0 0 3 * * *", zone = "Asia/Seoul")
 	@Transactional
 	public void cleanupExpiredGuests() {
 		log.info("Starting guest accounts cleanup job...");
-		LocalDateTime limit = LocalDateTime.now().minusDays(7);
+		LocalDateTime limit = LocalDateTime.now().minusDays(30);
 
 		List<User> users = userRepository.findAll();
 		List<User> expiredGuests = users.stream()
